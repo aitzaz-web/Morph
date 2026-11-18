@@ -1,24 +1,28 @@
 # Morph
 
-Prototype: a demo store page whose layout a user can rearrange by chatting. The AI only edits a layout JSON (where components go, shown/hidden/collapsed, width, theme/density/sidebar side). The components and their behavior never change, and company rules are enforced in code.
+Prototype: an invoicing dashboard ("Ledgerly") that each user can reshape by chatting. The AI can move, hide, resize and restyle the company's existing parts, and add **live views**: filtered, sorted or grouped lists of the company's data, drawn as a table, board, cards or list. It never writes code or changes what a button does. Every change is checked against the company's rules in code, and each user's layout is saved to their account.
 
 ## Run
 
 ```bash
 npm install
 cp .env.example .env   # add OPENAI_API_KEY (or ANTHROPIC_API_KEY)
-npm run dev            # http://localhost:5173
+npm run dev            # http://localhost:5173  (switch users in the top bar)
 ```
 
-`npm test` runs the validator tests.
+`npm test` runs the rule, view, permission and saving tests.
 
-## Layout
+## How it fits together
 
-- `shared/registry.ts`: component metadata the AI sees (ids, descriptions, importance, allowed regions)
-- `shared/layout.ts`: layout types, default layout, company rules, validator, ops
-- `server/strategies/common.ts`: prompt, layout tools, and the apply+validate step shared by all providers
-- `server/strategies/openai.ts` / `anthropic.ts`: the tool-calling loop per provider (OpenAI `gpt-6.1-sol` by default)
+- `shared/registry.ts`: what the company hands Morph: page parts, data sources (fields + actions) and users
+- `shared/views.ts`: live view spec, its checks, and the filter/sort/group logic
+- `shared/layout.ts`: layout types, default layout, company rules, changes ("ops"), and `replay`, which rebuilds a user's layout from their saved changes on top of the current default
+- `server/company.ts`: stand-in for the company's backend: data, permissions (reps only see their own customers), actions
+- `server/db.ts`: Morph's own SQLite store of each user's saved changes (`data/morph.db`)
+- `server/strategies/common.ts`: prompt, tools, and turning tool calls into checked changes
+- `server/strategies/openai.ts` / `anthropic.ts`: the tool-calling loop per provider
 - `scripts/try-requests.ts`: run canned requests through a provider and print what changed
-- `src/components/StoreComponents.tsx`: the store's real components (cart, checkout, orders, search, ...)
-- `src/Renderer.tsx`: layout JSON → components
+- `src/components/LedgerComponents.tsx`: the company's own components
+- `src/ViewPanel.tsx`: draws live views with Morph's fixed displays
+- `src/Renderer.tsx`: layout JSON → components and views
 - `src/Chat.tsx`: the chat panel (undo / reset included)

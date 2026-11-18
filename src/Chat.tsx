@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Layout } from "../shared/layout.ts";
+import type { Layout, Op } from "../shared/layout.ts";
 
 interface Message {
   role: "user" | "assistant";
@@ -10,19 +10,26 @@ interface Message {
 }
 
 interface Props {
+  userId: string;
   layout: Layout;
-  onLayout: (layout: Layout) => void;
+  onChanges: (ops: Op[], reset: boolean) => void;
   onUndo: () => void;
   onReset: () => void;
   canUndo: boolean;
 }
 
-const SUGGESTIONS = ["Put my orders first", "Hide recommendations", "Make it simpler", "Move the cart to the left", "Dark mode please"];
+const SUGGESTIONS = [
+  "Show unpaid invoices over $500 at the top",
+  "Hide the promo and the news",
+  "Show my invoices as a board by status",
+  "Bigger text, calmer colors",
+  "Put today's visits first",
+];
 
-export function Chat({ layout, onLayout, onUndo, onReset, canUndo }: Props) {
+export function Chat({ userId, layout, onChanges, onUndo, onReset, canUndo }: Props) {
   const [open, setOpen] = useState(true);
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", text: "Hi! I can rearrange this page for you. Tell me what you'd like to see first, hide, or simplify." },
+    { role: "assistant", text: "Hi! I can reshape this page for you: move or hide things, or add a live view of your invoices and customers. What would help?" },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -48,14 +55,14 @@ export function Chat({ layout, onLayout, onUndo, onReset, canUndo }: Props) {
     setMessages((m) => [...m, { role: "user", text: message }]);
     setBusy(true);
     try {
-      const res = await fetch("/api/morph", {
+      const res = await fetch(`/api/morph?user=${userId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, layout, history }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`);
-      onLayout(data.layout);
+      onChanges(data.ops ?? [], !!data.reset);
       setMessages((m) => [...m, { role: "assistant", text: data.explanation, applied: data.applied, rejected: data.rejected }]);
     } catch (e) {
       setMessages((m) => [...m, { role: "assistant", text: (e as Error).message, error: true }]);
@@ -110,7 +117,7 @@ export function Chat({ layout, onLayout, onUndo, onReset, canUndo }: Props) {
             )}
           </div>
         ))}
-        {busy && <div className="msg assistant typing">Rearranging…</div>}
+        {busy && <div className="msg assistant typing">Working on it…</div>}
       </div>
       {messages.length <= 1 && (
         <div className="suggestions">
@@ -128,7 +135,7 @@ export function Chat({ layout, onLayout, onUndo, onReset, canUndo }: Props) {
           send(input);
         }}
       >
-        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="e.g. put my orders at the top" disabled={busy} />
+        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="e.g. show overdue invoices first" disabled={busy} />
         <button className="btn primary" disabled={busy || !input.trim()}>
           Send
         </button>

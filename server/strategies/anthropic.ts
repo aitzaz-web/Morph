@@ -2,7 +2,7 @@
 // LayoutSession, and rejected calls go back as errors so the model can adjust.
 
 import Anthropic from "@anthropic-ai/sdk";
-import { LayoutSession, MAX_ROUNDS, SYSTEM, TOOLS, cleanHistory, layoutNote, userPrompt } from "./common.ts";
+import { LayoutSession, MAX_ROUNDS, TOOLS, systemPrompt, cleanHistory, layoutNote, userPrompt } from "./common.ts";
 import type { MorphRequest, MorphResult } from "./types.ts";
 
 let client: Anthropic | null = null; // created on first use so .env is loaded by then
@@ -32,13 +32,13 @@ export async function anthropicStrategy(req: MorphRequest): Promise<MorphResult>
       // Re-run on a fallback model if this one declines; routed by refusal category.
       fallbacks: "default",
       output_config: { effort: (process.env.MORPH_EFFORT as "low" | "medium" | "high") || "low" },
-      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: systemPrompt(req.user), cache_control: { type: "ephemeral" } }],
       tools,
       messages,
     } as Anthropic.Beta.MessageCreateParamsNonStreaming);
 
     if (response.stop_reason === "refusal") {
-      return { layout: session.layout, explanation: "Sorry, I can't help with that request.", applied: session.applied, rejected: session.rejected };
+      return session.result("Sorry, I can't help with that request.");
     }
 
     const toolUses = response.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use");
@@ -48,7 +48,7 @@ export async function anthropicStrategy(req: MorphRequest): Promise<MorphResult>
         .map((b) => b.text)
         .join("\n")
         .trim();
-      return { layout: session.layout, explanation: text || "Done.", applied: session.applied, rejected: session.rejected };
+      return session.result(text || "Done.");
     }
 
     messages.push({ role: "assistant", content: response.content as Anthropic.Beta.BetaContentBlockParam[] });
@@ -59,10 +59,5 @@ export async function anthropicStrategy(req: MorphRequest): Promise<MorphResult>
     messages.push({ role: "user", content: [...results, { type: "text", text: layoutNote(session.layout) }] });
   }
 
-  return {
-    layout: session.layout,
-    explanation: "I made some changes but ran out of steps; tell me if anything else needs adjusting.",
-    applied: session.applied,
-    rejected: session.rejected,
-  };
+  return session.result("I made some changes but ran out of steps; tell me if anything else needs adjusting.");
 }

@@ -3,7 +3,7 @@
 // rejected calls go back as errors so the model can adjust.
 
 import OpenAI from "openai";
-import { LayoutSession, MAX_ROUNDS, SYSTEM, TOOLS, cleanHistory, layoutNote, userPrompt } from "./common.ts";
+import { LayoutSession, MAX_ROUNDS, TOOLS, systemPrompt, cleanHistory, layoutNote, userPrompt } from "./common.ts";
 import type { MorphRequest, MorphResult } from "./types.ts";
 
 export const DEFAULT_OPENAI_MODEL = "gpt-6.1-sol";
@@ -32,7 +32,7 @@ export async function openaiStrategy(req: MorphRequest): Promise<MorphResult> {
   for (let round = 0; round < MAX_ROUNDS; round++) {
     const response = await client.responses.create({
       model,
-      instructions: SYSTEM,
+      instructions: systemPrompt(req.user),
       input,
       tools,
       reasoning: { effort },
@@ -40,7 +40,7 @@ export async function openaiStrategy(req: MorphRequest): Promise<MorphResult> {
 
     const calls = response.output.filter((o): o is OpenAI.Responses.ResponseFunctionToolCall => o.type === "function_call");
     if (calls.length === 0) {
-      return { layout: session.layout, explanation: response.output_text?.trim() || "Done.", applied: session.applied, rejected: session.rejected };
+      return session.result(response.output_text?.trim() || "Done.");
     }
 
     // Send the model's own output (reasoning + calls) back, then a result for every call.
@@ -57,10 +57,5 @@ export async function openaiStrategy(req: MorphRequest): Promise<MorphResult> {
     input.push({ role: "user", content: layoutNote(session.layout) });
   }
 
-  return {
-    layout: session.layout,
-    explanation: "I made some changes but ran out of steps; tell me if anything else needs adjusting.",
-    applied: session.applied,
-    rejected: session.rejected,
-  };
+  return session.result("I made some changes but ran out of steps; tell me if anything else needs adjusting.");
 }
