@@ -1,0 +1,10 @@
+{
+  "name": "@morph/react",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": { "react": ">=19" },
+  "dependencies": { "@morph/shared": "*" },
+  "devDependencies": { "@types/react": "^19.3.0", "react": "^19.3.1" }
+}

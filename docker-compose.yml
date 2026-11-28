@@ -1,0 +1,14 @@
+# Local Postgres for development. The service creates its tables on start.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: morph
+      POSTGRES_PASSWORD: morph
+      POSTGRES_DB: morph
+    ports:
+      - "5433:5432"
+    volumes:
+      - morph-pg:/var/lib/postgresql/data
+volumes:
+  morph-pg:

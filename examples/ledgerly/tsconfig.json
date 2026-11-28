@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "types": ["node", "vite/client"] },
+  "include": ["src", "server", "morph.manifest.ts", "vite.config.ts"],
+  "exclude": ["src/default-page.tsx"]
+}

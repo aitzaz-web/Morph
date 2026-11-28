@@ -1,0 +1,20 @@
+{
+  "name": "morph-platform",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "examples/*", "infra"],
+  "scripts": {
+    "dev": "concurrently -k -n morph,ledgerly -c magenta,cyan \"npm run dev -w @morph/service\" \"npm run dev -w ledgerly\"",
+    "db:up": "docker compose up -d postgres",
+    "setup:local": "tsx scripts/setup-local.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p packages/shared && tsc --noEmit -p packages/service && tsc --noEmit -p packages/sdk && tsc --noEmit -p packages/cli && tsc --noEmit -p examples/ledgerly && tsc --noEmit -p infra"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "concurrently": "^10.0.7",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

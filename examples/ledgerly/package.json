@@ -1,0 +1,30 @@
+{
+  "name": "ledgerly",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n web,api -c cyan,blue \"vite\" \"tsx watch server/main.ts\"",
+    "build": "vite build",
+    "start": "NODE_ENV=production tsx server/main.ts",
+    "morph:push": "morph push morph.manifest.ts --surface dashboard",
+    "morph:check": "morph check morph.manifest.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.8",
+    "@morph/react": "*",
+    "hono": "^4.13.18",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@morph/cli": "*",
+    "@morph/shared": "*",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "concurrently": "^10.0.7",
+    "vite": "^8.3.8"
+  }
+}

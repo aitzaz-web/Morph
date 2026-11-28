@@ -1,0 +1,8 @@
+{
+  "name": "@morph/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "morph": "./src/cli.ts" },
+  "dependencies": { "@morph/shared": "*", "tsx": "^4.23.15" }
+}
